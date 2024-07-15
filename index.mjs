@@ -84,6 +84,10 @@ export function parse(markdown) {
 
     for (let iend = 0; iend < tokens.length; iend++) {
         function render(istart, open, close) {
+            if (debug) {
+                console.log("rendering from", istart, "to", iend);
+            }
+
             let rendered = open;
             for (let i = istart + 1; i < iend; i++) {
                 rendered += toText(tokens[i]);
@@ -94,6 +98,10 @@ export function parse(markdown) {
                 content: rendered,
             });
             iend = istart; // will increment to the token after start again on next iteration
+
+            if (debug) {
+                console.log("now iend is", iend, "and tokens are", tokens);
+            }
         }
 
         const end = tokens[iend];
@@ -104,8 +112,9 @@ export function parse(markdown) {
         if (canClose(end)) {
             for (let istart = iend - 1; istart >= 0; istart--) {
                 const start = tokens[istart];
-                if (canOpen(start)) {
-                    render(istart, "<em>", "</em>")
+                if (canOpen(start) && start.char === end.char) {
+                    render(istart, "<em>", "</em>");
+                    break;
                 }
             }
         }

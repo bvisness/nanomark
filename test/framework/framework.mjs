@@ -67,7 +67,15 @@ export class TestContext {
   log(...args) {
     this.testCase.logs.push({
       isError: false,
-      stuff: args,
+      stuff: args.map(v => {
+        try {
+          return JSON.parse(JSON.stringify(v));
+        } catch (e) {
+          if (e instanceof TypeError) {
+            return v;
+          }
+        }
+      }),
     });
   }
 }
