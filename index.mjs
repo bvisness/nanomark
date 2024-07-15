@@ -1,9 +1,9 @@
 /**
- * Converts a string of Markdown to HTML, albeit only handling bold and italic text.
+ * Converts a string of Markdown to HTML, albeit only an extremely small subset of Markdown.
  *
  * @param {string} markdown The Markdown string to process.
  * @returns {string} The rendered HTML.
  */
 export function parse(markdown) {
-    return "norp";
+    return `<p>${markdown}</p>`;
 }
