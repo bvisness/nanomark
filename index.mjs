@@ -24,6 +24,10 @@ export function parse(markdown) {
         }
         tokens[tokens.length-1].content += c;
     }
+    function endRun(c) {
+        const currentRun = tokens[tokens.length-1];
+        currentRun.followedBy = categorize(c);
+    }
 
     let runChar = null;
     let precedingKind = "whitespace"; // beginning of line counts as whitespace for flanking
@@ -32,6 +36,9 @@ export function parse(markdown) {
             // Starting or continuing a delimiter run
             let currentRun = peekType() === "run" ? tokens[tokens.length-1] : null;
             if (!currentRun || currentRun.char !== c) {
+                if (currentRun) {
+                    endRun(c);
+                }
                 currentRun = {
                     type: "run",
                     char: c,
@@ -43,14 +50,13 @@ export function parse(markdown) {
                 tokens.push(currentRun);
             }
             currentRun.length += 1;
-            precedingKind = null;
+            precedingKind = "punctuation"; // * and _ are Unicode punctuation
         } else if (c === "\\") {
             precedingKind = "backslash";
         } else {
             if (peekType() === "run") {
                 // Ending a delimiter run
-                const currentRun = tokens[tokens.length-1];
-                currentRun.followedBy = categorize(c);
+                endRun(c);
             }
             precedingKind = precedingKind === "backslash" ? null : categorize(c);
             appendChar(c);

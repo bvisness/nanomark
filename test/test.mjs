@@ -144,7 +144,6 @@ bim</em> bop</strong></p>`);
   assertParse(t, `****foo*`, `<p>***<em>foo</em></p>`);
   assertParse(t, `**foo***`, `<p><strong>foo</strong>*</p>`);
   assertParse(t, `*foo****`, `<p><em>foo</em>***</p>`);
-  return;
 
   // Rule 12
   assertParse(t, `foo ___`, `<p>foo ___</p>`);
@@ -168,6 +167,7 @@ bim</em> bop</strong></p>`);
   assertParse(t, `****foo****`, `<p><strong><strong>foo</strong></strong></p>`);
   assertParse(t, `____foo____`, `<p><strong><strong>foo</strong></strong></p>`);
   assertParse(t, `******foo******`, `<p><strong><strong><strong>foo</strong></strong></strong></p>`);
+  return;
 
   // Rule 14
   assertParse(t, `***foo***`, `<p><em><strong>foo</strong></em></p>`);
