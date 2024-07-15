@@ -83,7 +83,10 @@ export function parse(markdown) {
     }
 
     for (let iend = 0; iend < tokens.length; iend++) {
-        function render(istart, open, close) {
+        function render(istart, n, open, close) {
+            const start = tokens[istart];
+            const end = tokens[iend];
+
             if (debug) {
                 console.log("rendering from", istart, "to", iend);
             }
@@ -93,10 +96,26 @@ export function parse(markdown) {
                 rendered += toText(tokens[i]);
             }
             rendered += close;
-            tokens.splice(istart, iend - istart + 1, {
+
+            const newTokens = [];
+            if (start.length > n) {
+                newTokens.push({
+                    ...start,
+                    length: start.length - n,
+                });
+            }
+            newTokens.push({
                 type: "text",
                 content: rendered,
             });
+            if (end.length > n) {
+                newTokens.push({
+                    ...end,
+                    length: end.length - n,
+                });
+            }
+
+            tokens.splice(istart, iend - istart + 1, ...newTokens);
             iend = istart; // will increment to the token after start again on next iteration
 
             if (debug) {
@@ -109,13 +128,32 @@ export function parse(markdown) {
             continue;
         }
 
-        if (canClose(end)) {
+        if (canCloseStrong(end)) {
+            let didRender = false;
             for (let istart = iend - 1; istart >= 0; istart--) {
                 const start = tokens[istart];
-                if (canOpen(start) && start.char === end.char) {
-                    render(istart, "<em>", "</em>");
+                if (canOpenStrong(start) && compatible(start, end)) {
+                    render(istart, 2, "<strong>", "</strong>");
+                    didRender = true;
                     break;
                 }
+            }
+            if (didRender) {
+                continue;
+            }
+        }
+        if (canClose(end)) {
+            let didRender = false;
+            for (let istart = iend - 1; istart >= 0; istart--) {
+                const start = tokens[istart];
+                if (canOpen(start) && compatible(start, end)) {
+                    render(istart, 1, "<em>", "</em>");
+                    didRender = true;
+                    break;
+                }
+            }
+            if (didRender) {
+                continue;
             }
         }
     }
@@ -192,6 +230,18 @@ function canOpenStrong(run) {
 
 function canCloseStrong(run) {
     return canClose(run) && run.length >= 2;
+}
+
+function compatible(start, end) {
+    if (start === end) {
+        throw new Error("the same token should not be compared with itself for compatibility");
+    }
+
+    let sumOk = true;
+    if ((canOpen(start) && canClose(start)) || (canOpen(end) && canClose(end))) {
+        sumOk = ((start.length + end.length) % 3 !== 0 || (start.length % 3 === 0 && end.length % 3 === 0));
+    }
+    return start.char === end.char && sumOk;
 }
 
 function toText(t) {

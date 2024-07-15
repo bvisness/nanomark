@@ -38,8 +38,6 @@ test("parse", t => {
   assertEqual(t, parse(`*(*foo*)*`), `<p><em>(<em>foo</em>)</em></p>`);
   assertEqual(t, parse(`*foo*bar`), `<p><em>foo</em>bar</p>`);
 
-  return;
-
   // Rule 4
   assertEqual(t, parse(`_foo bar _`), `<p>_foo bar _</p>`);
   assertEqual(t, parse(`_(_foo)`), `<p>_(_foo)</p>`);
@@ -52,7 +50,7 @@ test("parse", t => {
   // Rule 5
   assertEqual(t, parse(`**foo bar**`), `<p><strong>foo bar</strong></p>`);
   assertEqual(t, parse(`** foo bar**`), `<p>** foo bar**</p>`);
-  assertEqual(t, parse(`a**"foo"**`), `<p>a**&quot;foo&quot;**</p>`);
+  // assertEqual(t, parse(`a**"foo"**`), `<p>a**&quot;foo&quot;**</p>`); // TODO: HTML escapes
   assertEqual(t, parse(`foo**bar**`), `<p>foo<strong>bar</strong></p>`);
 
   // Rule 6
@@ -61,7 +59,7 @@ test("parse", t => {
   assertEqual(t, parse(`__
 foo bar__`), `<p>__
 foo bar__</p>`);
-  assertEqual(t, parse(`a__"foo"__`), `<p>a__&quot;foo&quot;__</p>`);
+  // assertEqual(t, parse(`a__"foo"__`), `<p>a__&quot;foo&quot;__</p>`); // TODO: HTML escapes
   assertEqual(t, parse(`foo__bar__`), `<p>foo__bar__</p>`);
   assertEqual(t, parse(`5__6__78`), `<p>5__6__78</p>`);
   assertEqual(t, parse(`пристаням__стремятся__`), `<p>пристаням__стремятся__</p>`);
@@ -75,7 +73,7 @@ foo bar__</p>`);
   assertEqual(t, parse(`**Gomphocarpus (*Gomphocarpus physocarpus*, syn.
 *Asclepias physocarpa*)**`), `<p><strong>Gomphocarpus (<em>Gomphocarpus physocarpus</em>, syn.
 <em>Asclepias physocarpa</em>)</strong></p>`);
-  assertEqual(t, parse(`**foo "*bar*" foo**`), `<p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>`);
+  // assertEqual(t, parse(`**foo "*bar*" foo**`), `<p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>`); // TODO: HTML escapes
   assertEqual(t, parse(`**foo**bar`), `<p><strong>foo</strong>bar</p>`);
 
   // Rule 8
@@ -88,7 +86,7 @@ foo bar__</p>`);
   assertEqual(t, parse(`__(bar)__.`), `<p><strong>(bar)</strong>.</p>`);
 
   // Rule 9
-  assertEqual(t, parse(`*foo [bar](/url)*`), `<p><em>foo <a href="/url">bar</a></em></p>`);
+  // assertEqual(t, parse(`*foo [bar](/url)*`), `<p><em>foo <a href="/url">bar</a></em></p>`); // TODO: links
   assertEqual(t, parse(`*foo
 bar*`), `<p><em>foo
 bar</em></p>`);
@@ -105,9 +103,10 @@ bar</em></p>`);
   assertEqual(t, parse(`foo***bar***baz`), `<p>foo<em><strong>bar</strong></em>baz</p>`);
   assertEqual(t, parse(`foo******bar*********baz`), `<p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>`);
   assertEqual(t, parse(`*foo **bar *baz* bim** bop*`), `<p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>`);
-  assertEqual(t, parse(`*foo [*bar*](/url)*`), `<p><em>foo <a href="/url"><em>bar</em></a></em></p>`);
+  // assertEqual(t, parse(`*foo [*bar*](/url)*`), `<p><em>foo <a href="/url"><em>bar</em></a></em></p>`); // TODO: HTML escapes
   assertEqual(t, parse(`** is not an empty emphasis`), `<p>** is not an empty emphasis</p>`);
   assertEqual(t, parse(`**** is not an empty strong emphasis`), `<p>**** is not an empty strong emphasis</p>`);
+  return;
 
   // Rule 10
   assertEqual(t, parse(`**foo [bar](/url)**`), `<p><strong>foo <a href="/url">bar</a></strong></p>`);
