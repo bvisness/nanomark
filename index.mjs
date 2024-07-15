@@ -31,7 +31,7 @@ export function parse(markdown) {
         if ((c === "*" || c === "_") && precedingKind !== "backslash") {
             // Starting or continuing a delimiter run
             let currentRun = peekType() === "run" ? tokens[tokens.length-1] : null;
-            if (!currentRun) {
+            if (!currentRun || currentRun.char !== c) {
                 currentRun = {
                     type: "run",
                     char: c,
@@ -43,6 +43,7 @@ export function parse(markdown) {
                 tokens.push(currentRun);
             }
             currentRun.length += 1;
+            precedingKind = null;
         } else if (c === "\\") {
             precedingKind = "backslash";
         } else {

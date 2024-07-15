@@ -130,7 +130,6 @@ bim</em> bop</strong></p>`);
   // assertParse(t, `**foo [*bar*](/url)**`, `<p><strong>foo <a href="/url"><em>bar</em></a></strong></p>`); // TODO: links
   assertParse(t, `__ is not an empty emphasis`, `<p>__ is not an empty emphasis</p>`);
   assertParse(t, `____ is not an empty strong emphasis`, `<p>____ is not an empty strong emphasis</p>`);
-  return;
 
   // Rule 11
   assertParse(t, `foo ***`, `<p>foo ***</p>`);
@@ -145,6 +144,7 @@ bim</em> bop</strong></p>`);
   assertParse(t, `****foo*`, `<p>***<em>foo</em></p>`);
   assertParse(t, `**foo***`, `<p><strong>foo</strong>*</p>`);
   assertParse(t, `*foo****`, `<p><em>foo</em>***</p>`);
+  return;
 
   // Rule 12
   assertParse(t, `foo ___`, `<p>foo ___</p>`);
