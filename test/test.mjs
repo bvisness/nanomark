@@ -167,7 +167,6 @@ bim</em> bop</strong></p>`);
   assertParse(t, `****foo****`, `<p><strong><strong>foo</strong></strong></p>`);
   assertParse(t, `____foo____`, `<p><strong><strong>foo</strong></strong></p>`);
   assertParse(t, `******foo******`, `<p><strong><strong><strong>foo</strong></strong></strong></p>`);
-  return;
 
   // Rule 14
   assertParse(t, `***foo***`, `<p><em><strong>foo</strong></em></p>`);
@@ -181,16 +180,16 @@ bim</em> bop</strong></p>`);
   assertParse(t, `**foo **bar baz**`, `<p>**foo <strong>bar baz</strong></p>`);
   assertParse(t, `*foo *bar baz*`, `<p>*foo <em>bar baz</em></p>`);
 
-  // Rule 17
-  assertParse(t, `*[bar*](/url)`, `<p>*<a href="/url">bar*</a></p>`);
-  assertParse(t, `_foo [bar_](/url)`, `<p>_foo <a href="/url">bar_</a></p>`);
-  assertParse(t, `*<img src="foo" title="*"/>`, `<p>*<img src="foo" title="*"/></p>`);
-  assertParse(t, `**<a href="**">`, `<p>**<a href="**"></p>`);
-  assertParse(t, `__<a href="__">`, `<p>__<a href="__"></p>`);
-  assertParse(t, `*a \`*\`*`, `<p><em>a <code>*</code></em></p>`);
-  assertParse(t, `_a \`_\`_`, `<p><em>a <code>_</code></em></p>`);
-  assertParse(t, `**a<https://foo.bar/?q=**>`, `<p>**a<a href="https://foo.bar/?q=**">https://foo.bar/?q=**</a></p>`);
-  assertParse(t, `__a<https://foo.bar/?q=__>`, `<p>__a<a href="https://foo.bar/?q=__">https://foo.bar/?q=__</a></p>`);
+  // // Rule 17
+  // assertParse(t, `*[bar*](/url)`, `<p>*<a href="/url">bar*</a></p>`);
+  // assertParse(t, `_foo [bar_](/url)`, `<p>_foo <a href="/url">bar_</a></p>`);
+  // assertParse(t, `*<img src="foo" title="*"/>`, `<p>*<img src="foo" title="*"/></p>`);
+  // assertParse(t, `**<a href="**">`, `<p>**<a href="**"></p>`);
+  // assertParse(t, `__<a href="__">`, `<p>__<a href="__"></p>`);
+  // assertParse(t, `*a \`*\`*`, `<p><em>a <code>*</code></em></p>`);
+  // assertParse(t, `_a \`_\`_`, `<p><em>a <code>_</code></em></p>`);
+  // assertParse(t, `**a<https://foo.bar/?q=**>`, `<p>**a<a href="https://foo.bar/?q=**">https://foo.bar/?q=**</a></p>`);
+  // assertParse(t, `__a<https://foo.bar/?q=__>`, `<p>__a<a href="https://foo.bar/?q=__">https://foo.bar/?q=__</a></p>`);
 });
 
 run();
