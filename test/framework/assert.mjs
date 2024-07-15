@@ -35,11 +35,12 @@ export function assertFalse(t, v) {
  * @param {TestContext} t
  * @param {T} actual
  * @param {T} expected
+ * @param {string} [msg]
  * @returns {boolean}
  */
-export function assertEqual(t, actual, expected) {
+export function assertEqual(t, actual, expected, msg) {
     if (actual !== expected) {
-        t.fail(`Expected ${str(expected)} but got ${str(actual)}`);
+        t.fail(`${msg ? msg + ": " : ""}Expected ${str(expected)} but got ${str(actual)}`);
         return false;
     }
     return true;

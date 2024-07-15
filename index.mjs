@@ -128,32 +128,16 @@ export function parse(markdown) {
             continue;
         }
 
-        if (canCloseStrong(end)) {
-            let didRender = false;
-            for (let istart = iend - 1; istart >= 0; istart--) {
-                const start = tokens[istart];
-                if (canOpenStrong(start) && compatible(start, end)) {
-                    render(istart, 2, "<strong>", "</strong>");
-                    didRender = true;
-                    break;
-                }
+        for (let istart = iend - 1; istart >= 0; istart--) {
+            const start = tokens[istart];
+
+            if (canOpenStrong(start) && canCloseStrong(end) && compatible(start, end)) {
+                render(istart, 2, "<strong>", "</strong>");
+                break;
             }
-            if (didRender) {
-                continue;
-            }
-        }
-        if (canClose(end)) {
-            let didRender = false;
-            for (let istart = iend - 1; istart >= 0; istart--) {
-                const start = tokens[istart];
-                if (canOpen(start) && compatible(start, end)) {
-                    render(istart, 1, "<em>", "</em>");
-                    didRender = true;
-                    break;
-                }
-            }
-            if (didRender) {
-                continue;
+            if (canOpen(start) && canClose(end) && compatible(start, end)) {
+                render(istart, 1, "<em>", "</em>");
+                break;
             }
         }
     }
