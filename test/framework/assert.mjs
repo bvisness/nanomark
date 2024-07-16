@@ -1,3 +1,5 @@
+import { TestContext } from "./framework.mjs"
+
 /**
  * @param {any} v
  * @returns {string}

@@ -1,0 +1,20 @@
+{
+  "name": "nanomark",
+  "description": "A very tiny \"Markdown\" parser",
+  "version": "0.0.1",
+  "author": "Ben Visness <ben@bvisness.me> (https://bvisness.me/)",
+  "license": "MIT",
+  "homepage": "https://github.com/bvisness/nanomark",
+  "repository": "github:bvisness/nanomark",
+
+  "main": "index.mjs",
+  "files": ["index.mjs"],
+
+  "devDependencies": {
+    "@types/node": "^20.14.10"
+  },
+
+  "scripts": {
+    "test": "node test/test.mjs"
+  }
+}

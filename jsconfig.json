@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "lib": ["ES2015"],
+        "types": [], // disable Node types
+        "checkJs": true,
+    },
+    "include": ["index.mjs"]
+}

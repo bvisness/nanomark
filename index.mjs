@@ -1,4 +1,32 @@
-const debug = false;
+/**
+ * @typedef TokenText
+ * @type {object}
+ *
+ * @property {"text"} type
+ * @property {string} content
+ */
+
+/**
+ * @typedef TokenRun
+ * @type {object}
+ *
+ * @property {"run"} type
+ * @property {string} char
+ * @property {number} length
+ *
+ * @property {CharKind} precededBy
+ * @property {?CharKind} followedBy
+ */
+
+/**
+ * @typedef Token
+ * @type {(TokenText|TokenRun)}
+ */
+
+/**
+ * @typedef CharKind
+ * @type {("whitespace"|"punctuation"|"backslash")}
+ */
 
 /**
  * Converts a string of Markdown to HTML, albeit only an extremely small subset of Markdown.
@@ -7,14 +35,51 @@ const debug = false;
  * @returns {string} The rendered HTML.
  */
 export function parse(markdown) {
-    if (debug) {
-        console.log(`====== ${markdown} ======`);
-    }
+    /*
+     * The implementation of this function follows directly from the CommonMark spec and uses
+     * terminology from the spec such as "left-flanking" and "right-flanking". You should read and
+     * understand this section of the spec before reading this code:
+     *
+     * https://spec.commonmark.org/0.31.2/#emphasis-and-strong-emphasis
+     *
+     * Other general notes about the implementation:
+     *
+     * - We iterate through the Markdown string using for...of so that we leverage the iterator
+     *   protocol on JS strings, which iterates by Unicode code points. Other APIs for accessing
+     *   strings in JS (such as `charAt` or the `[]` operator) yield UTF-16 code units, _not_
+     *   Unicode code points as required by CommonMark. (`codePointAt` could work but the need to
+     *   explicitly handle trailing surrogates makes it too much of a pain.)
+     *
+     *   Thankfully, very little state machine logic is required during this parsing process, so
+     *   being constrained to a single for...of loop with no cursor control is not a big deal. If
+     *   in the future we did want the ability to advance or rewind the "cursor" within the loop,
+     *   we could perhaps call the iterator protocol's `next()` directly along with a small buffer
+     *   of previous code points.
+     */
 
-    let tokens = []; // runs and plain text
+    /*
+     * Step 1: Tokenize the Markdown text, separating raw text and delimiter runs.
+     */
+
+    /** @type {Token[]} */
+    const tokens = [];
+
+    /** @returns {Token} */
+    function top() {
+        if (tokens.length === 0) {
+            throw new Error("top token does not exist");
+        }
+        return tokens[tokens.length-1];
+    }
+    function topText() { return assertText(top()); }
+    function topRun() { return assertRun(top()); }
+
+    /** @returns {?Token["type"]} */
     function peekType() {
         return tokens.length > 0 ? tokens[tokens.length-1].type : null;
     }
+
+    /** @param {string} c */
     function appendChar(c) {
         if (peekType() !== "text") {
             tokens.push({
@@ -22,22 +87,26 @@ export function parse(markdown) {
                 content: "",
             });
         }
-        tokens[tokens.length-1].content += c;
-    }
-    function endRun(c) {
-        const currentRun = tokens[tokens.length-1];
-        currentRun.followedBy = categorize(c);
+        topText().content += c;
     }
 
-    let runChar = null;
+    /**
+     * @param {TokenRun} run
+     * @param {string} followingChar
+     */
+    function endRun(run, followingChar) {
+        run.followedBy = categorize(followingChar);
+    }
+
+    /** @type {?CharKind} */
     let precedingKind = "whitespace"; // beginning of line counts as whitespace for flanking
     for (const c of markdown) {
         if ((c === "*" || c === "_") && precedingKind !== "backslash") {
             // Starting or continuing a delimiter run
-            let currentRun = peekType() === "run" ? tokens[tokens.length-1] : null;
+            let currentRun = peekType() === "run" ? /** @type {TokenRun} */(top()) : null;
             if (!currentRun || currentRun.char !== c) {
                 if (currentRun) {
-                    endRun(c);
+                    endRun(currentRun, c);
                 }
                 currentRun = {
                     type: "run",
@@ -56,7 +125,7 @@ export function parse(markdown) {
         } else {
             if (peekType() === "run") {
                 // Ending a delimiter run
-                endRun(c);
+                endRun(topRun(), c);
             }
             precedingKind = precedingKind === "backslash" ? null : categorize(c);
             appendChar(c);
@@ -64,72 +133,58 @@ export function parse(markdown) {
     }
 
     if (peekType() === "run") {
-        tokens[tokens.length-1].followedBy = "whitespace"; // end of line counts as whitespace for flanking
+        topRun().followedBy = "whitespace"; // end of line counts as whitespace for flanking
     }
 
-    if (debug) {
-        const printToks = [];
-        for (const t of tokens) {
-            if (t.type === "text") {
-                printToks.push(t.content);
-            } else if (t.type === "run") {
-                printToks.push({
-                    ...t,
-                    leftFlanking: isLeftFlanking(t),
-                    rightFlanking: isRightFlanking(t),
-                    canOpen: canOpen(t),
-                    canClose: canClose(t),
-                    canOpenStrong: canOpenStrong(t),
-                    canCloseStrong: canCloseStrong(t),
-                });
-            } else {
-                printToks.push("???");
-            }
+    /*
+     * Step 2: Iterate through the tokens, converting ranges of emphasis to text.
+     */
+
+    /**
+     * @param {number} istart
+     * @param {number} iend
+     * @param {number} n
+     * @param {string} open
+     * @param {string} close
+     * @returns {number} The new value for iend.
+     */
+    function render(istart, iend, n, open, close) {
+        const start = assertRun(tokens[istart]);
+        const end = assertRun(tokens[iend]);
+
+        let rendered = open;
+        for (let i = istart + 1; i < iend; i++) {
+            rendered += toText(tokens[i]);
         }
-        console.log("parsed tokens:", printToks);
+        rendered += close;
+
+        /** @type {Token[]} */
+        const newTokens = [];
+        if (start.length > n) {
+            newTokens.push({
+                ...start,
+                length: start.length - n,
+            });
+        }
+        newTokens.push({
+            type: "text",
+            content: rendered,
+        });
+        if (end.length > n) {
+            newTokens.push({
+                ...end,
+                length: end.length - n,
+            });
+        }
+
+        tokens.splice(istart, iend - istart + 1, ...newTokens);
+
+        // setting iend to istart will cause iend to increment to the token after the render on
+        // next iteration
+        return istart;
     }
 
     for (let iend = 0; iend < tokens.length; iend++) {
-        function render(istart, n, open, close) {
-            const start = tokens[istart];
-            const end = tokens[iend];
-
-            if (debug) {
-                console.log("rendering from", istart, "to", iend);
-            }
-
-            let rendered = open;
-            for (let i = istart + 1; i < iend; i++) {
-                rendered += toText(tokens[i]);
-            }
-            rendered += close;
-
-            const newTokens = [];
-            if (start.length > n) {
-                newTokens.push({
-                    ...start,
-                    length: start.length - n,
-                });
-            }
-            newTokens.push({
-                type: "text",
-                content: rendered,
-            });
-            if (end.length > n) {
-                newTokens.push({
-                    ...end,
-                    length: end.length - n,
-                });
-            }
-
-            tokens.splice(istart, iend - istart + 1, ...newTokens);
-            iend = istart; // will increment to the token after start again on next iteration
-
-            if (debug) {
-                console.log("now iend is", iend, "and tokens are", tokens);
-            }
-        }
-
         const end = tokens[iend];
         if (end.type !== "run") {
             continue;
@@ -139,19 +194,19 @@ export function parse(markdown) {
             const start = tokens[istart];
 
             if (canOpenStrong(start) && canCloseStrong(end) && compatible(start, end)) {
-                render(istart, 2, "<strong>", "</strong>");
+                iend = render(istart, iend, 2, "<strong>", "</strong>");
                 break;
             }
             if (canOpen(start) && canClose(end) && compatible(start, end)) {
-                render(istart, 1, "<em>", "</em>");
+                iend = render(istart, iend, 1, "<em>", "</em>");
                 break;
             }
         }
     }
-    if (debug) {
-        console.log("rendered tokens:", tokens);
-    }
 
+    /*
+     * Step 3: Render the final text.
+     */
     let output = "<p>";
     for (const t of tokens) {
         output += toText(t);
@@ -161,14 +216,18 @@ export function parse(markdown) {
     return output;
 }
 
+/** @param {string} c */
 function isWhitespace(c) {
     return /\s/.test(c);
 }
 
+/** @param {string} c */
 function isPunctuation(c) {
+    // @ts-ignore: The /u flag is valid under ES2015, but TS is confused.
     return /(\p{P}|\p{S})/u.test(c);
 }
 
+/** @param {string} c */
 function categorize(c) {
     if (isWhitespace(c)) {
         return "whitespace";
@@ -179,14 +238,39 @@ function categorize(c) {
     }
 }
 
+/**
+ * @param {Token} t
+ * @returns {TokenText}
+ */
+function assertText(t) {
+    if (t.type !== "text") {
+        throw new Error("expected text token");
+    }
+    return t;
+}
+
+/**
+ * @param {Token} t
+ * @returns {TokenRun}
+ */
+function assertRun(t) {
+    if (t.type !== "run") {
+        throw new Error("expected run token");
+    }
+    return t;
+}
+
+/** @param {TokenRun} run */
 function isLeftFlanking(run) {
     return run.followedBy !== "whitespace" && (run.followedBy !== "punctuation" || run.precededBy === "whitespace" || run.precededBy === "punctuation");
 }
 
+/** @param {TokenRun} run */
 function isRightFlanking(run) {
     return run.precededBy !== "whitespace" && (run.precededBy !== "punctuation" || run.followedBy === "whitespace" || run.followedBy === "punctuation");
 }
 
+/** @param {Token} t */
 function canOpen(t) {
     if (t.type !== "run") {
         return false;
@@ -201,6 +285,7 @@ function canOpen(t) {
     }
 }
 
+/** @param {Token} t */
 function canClose(t) {
     if (t.type !== "run") {
         return false;
@@ -215,17 +300,32 @@ function canClose(t) {
     }
 }
 
-function canOpenStrong(run) {
-    return canOpen(run) && run.length >= 2;
+/** @param {Token} t */
+function canOpenStrong(t) {
+    if (t.type !== "run") {
+        return false;
+    }
+    return canOpen(t) && t.length >= 2;
 }
 
-function canCloseStrong(run) {
-    return canClose(run) && run.length >= 2;
+/** @param {Token} t */
+function canCloseStrong(t) {
+    if (t.type !== "run") {
+        return false;
+    }
+    return canClose(t) && t.length >= 2;
 }
 
+/**
+ * @param {Token} start
+ * @param {Token} end
+ */
 function compatible(start, end) {
     if (start === end) {
         throw new Error("the same token should not be compared with itself for compatibility");
+    }
+    if (start.type !== "run" || end.type !== "run") {
+        return false;
     }
 
     let sumOk = true;
@@ -235,12 +335,14 @@ function compatible(start, end) {
     return start.char === end.char && sumOk;
 }
 
+/** @param {Token} t */
 function toText(t) {
-    if (t.type === "text") {
-        return t.content;
-    } else if (t.type === "run") {
-        return t.char.repeat(t.length);
-    } else {
-        throw new Error(`bad token type ${t.type}`);
+    switch (t.type) {
+        case "text":
+            return t.content;
+        case "run":
+            return t.char.repeat(t.length);
+        default:
+            throw new Error(`bad token type ${/** @type {any} */(t).type}`);
     }
 }

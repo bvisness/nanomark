@@ -1,5 +1,5 @@
 import { parse } from "../index.mjs";
-import { test, run, assertEqual } from "./framework/index.mjs";
+import { test, run, assertEqual, TestContext } from "./framework/index.mjs";
 
 test("parse", t => {
   /*
@@ -7,6 +7,11 @@ test("parse", t => {
    * https://spec.commonmark.org/0.31.2/#emphasis-and-strong-emphasis
    */
 
+  /**
+   * @param {TestContext} t
+   * @param {string} orig
+   * @param {string} expected
+   */
   function assertParse(t, orig, expected) {
     assertEqual(t, parse(orig), expected, `For ${orig}`);
   }

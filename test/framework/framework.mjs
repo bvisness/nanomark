@@ -19,11 +19,24 @@
  */
 
 /**
- * @typedef Log
+ * @typedef NormalLog
  * @type {object}
  *
- * @property {boolean} isError
- * @property {Array|Error} payload
+ * @property {false} isError
+ * @property {any[]} stuff
+ */
+
+/**
+ * @typedef ErrorLog
+ * @type {object}
+ *
+ * @property {true} isError
+ * @property {Error} err
+ */
+
+/**
+ * @typedef Log
+ * @type {(NormalLog|ErrorLog)}
  */
 
 export class TestContext {
@@ -159,6 +172,7 @@ export function run(name) {
         if (log.isError) {
           console.error(log.err);
         } else {
+          // @ts-ignore: Somehow it does not understand that isError is a boolean.
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           console.log(...log.stuff);
         }
